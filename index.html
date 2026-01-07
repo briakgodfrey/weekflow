@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A minimalist, monochrome productivity planner for focused work and intentional planning.">
+    <meta name="author" content="Briabytes">
+    <title>Weekflow Planner</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">Weekflow</div>
+                <div class="tagline">Your intelligent planner</div>
+                <button class="theme-toggle" onclick="toggleDarkMode()" title="Toggle dark mode">
+                    <span class="theme-icon">☀️</span>
+                </button>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-label">Weeks</div>
+                    <div id="weekSelector"></div>
+                </div>
+                
+                <div style="padding: 0 30px;">
+                    <button class="add-week-btn" onclick="addNewWeek()">+ New Week</button>
+                </div>
+            </nav>
+
+            <div class="pomodoro-section">
+                <div class="timer-label">Focus Timer</div>
+                <div class="pomodoro-timer">
+                    <div class="timer-display" id="timerDisplay">25:00</div>
+                    <div class="timer-mode" id="timerMode">Focus Mode</div>
+                    <div class="timer-controls">
+                        <button class="timer-btn" id="startBtn" onclick="startTimer()">Start</button>
+                        <button class="timer-btn" id="pauseBtn" onclick="pauseTimer()" style="display:none;">Pause</button>
+                        <button class="timer-btn" onclick="resetTimer()">Reset</button>
+                    </div>
+                    <button class="timer-settings-btn" onclick="openTimerSettings()" title="Timer settings">⚙️ Settings</button>
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="progress-mini">
+                    <div class="progress-mini-label">
+                        <span>Progress</span>
+                        <span id="progress-text-mini">0%</span>
+                    </div>
+                    <div class="progress-mini-bar">
+                        <div class="progress-mini-fill" id="progress-fill-mini" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="stats-mini">
+                    <div class="stat-mini">
+                        <div class="stat-mini-number" id="completed-tasks-mini">0</div>
+                        <div class="stat-mini-label">Done</div>
+                    </div>
+                    <div class="stat-mini">
+                        <div class="stat-mini-number" id="total-tasks-mini">0</div>
+                        <div class="stat-mini-label">Total</div>
+                    </div>
+                </div>
+
+                <div class="data-controls">
+                    <div class="data-label">Backup & Restore</div>
+                    <div class="data-buttons">
+                        <button class="data-btn" onclick="exportData()" title="Download your planner data as a backup file">
+                            <span class="data-icon">↓</span> Export
+                        </button>
+                        <button class="data-btn" onclick="document.getElementById('importInput').click()" title="Upload a backup file to restore your data">
+                            <span class="data-icon">↑</span> Import
+                        </button>
+                    </div>
+                    <input type="file" id="importInput" accept=".json" style="display: none;" onchange="importData(event)">
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="content-header">
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <div>
+                        <h1 class="page-title" id="weekTitle">This Week</h1>
+                        <p class="page-subtitle">Track your goals and crush your targets</p>
+                    </div>
+                </div>
+                <button class="help-btn" onclick="showHelpModal()" title="Keyboard shortcuts">
+                    <span style="font-size: 20px;">?</span>
+                </button>
+            </header>
+
+            <div class="days-grid" id="daysContainer"></div>
+        </main>
+    </div>
+
+    <!-- Modal for creating new week -->
+    <div class="modal" id="weekModal">
+        <div class="modal-content">
+            <div class="modal-header">Create New Week</div>
+            <input type="text" class="modal-input" id="weekNameInput" placeholder="Week name (e.g., Jan 1-7)">
+            <input type="date" class="modal-input" id="weekStartDate" placeholder="Start date">
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" onclick="closeModal()">Cancel</button>
+                <button class="modal-btn primary" onclick="createNewWeek()">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for editing work schedule -->
+    <div class="modal" id="scheduleModal">
+        <div class="modal-content">
+            <div class="modal-header">Edit Work Schedule</div>
+            <input type="text" class="modal-input" id="scheduleInput" placeholder="e.g., 9:00 AM - 5:00 PM, OFF DAY, Remote">
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" onclick="closeScheduleModal()">Cancel</button>
+                <button class="modal-btn primary" onclick="saveWorkSchedule()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for editing week name -->
+    <div class="modal" id="editWeekModal">
+        <div class="modal-content">
+            <div class="modal-header">Edit Week Name</div>
+            <input type="text" class="modal-input" id="editWeekInput" placeholder="e.g., Jan 1-7">
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" onclick="closeEditWeekModal()">Cancel</button>
+                <button class="modal-btn primary" onclick="saveWeekName()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation modal -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-content">
+            <div class="modal-header" id="confirmTitle">Confirm Action</div>
+            <p class="modal-message" id="confirmMessage">Are you sure?</p>
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" onclick="closeConfirmModal()">Cancel</button>
+                <button class="modal-btn primary danger" id="confirmBtn" onclick="confirmAction()">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification modal -->
+    <div class="modal" id="notifyModal">
+        <div class="modal-content">
+            <div class="modal-header" id="notifyTitle">Notification</div>
+            <p class="modal-message" id="notifyMessage"></p>
+            <div class="modal-buttons">
+                <button class="modal-btn primary" onclick="closeNotifyModal()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for timer settings -->
+    <div class="modal" id="timerSettingsModal">
+        <div class="modal-content">
+            <div class="modal-header">Timer Settings</div>
+            
+            <div class="setting-group">
+                <label class="setting-label">Focus Length (minutes)</label>
+                <input type="number" class="modal-input" id="focusLengthInput" min="1" value="25">
+            </div>
+            
+            <div class="setting-group">
+                <label class="setting-label">Short Break (minutes)</label>
+                <input type="number" class="modal-input" id="shortBreakInput" min="1" value="5">
+            </div>
+            
+            <div class="setting-group">
+                <label class="setting-label">Long Break (minutes)</label>
+                <input type="number" class="modal-input" id="longBreakInput" min="1" value="15">
+            </div>
+            
+            <div class="setting-group">
+                <label class="setting-label">Pomodoros until long break</label>
+                <input type="number" class="modal-input" id="pomosInput" min="1" value="4">
+            </div>
+            
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" onclick="closeTimerSettings()">Cancel</button>
+                <button class="modal-btn primary" onclick="saveTimerSettings()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div class="modal" id="helpModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">Keyboard Shortcuts</div>
+            <div style="padding: 20px 0;">
+                <div class="shortcut-section">
+                    <div class="shortcut-category">Tasks & Sections</div>
+                    <div class="shortcut-item">
+                        <kbd>Ctrl + N</kbd>
+                        <span>Add new task to current section</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Ctrl + Shift + N</kbd>
+                        <span>Add new section to current day</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Enter</kbd>
+                        <span>Save task or section name</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Shift + Enter</kbd>
+                        <span>New line in task description</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Delete</kbd>
+                        <span>Delete focused task</span>
+                    </div>
+                </div>
+
+                <div class="shortcut-section">
+                    <div class="shortcut-category">Navigation</div>
+                    <div class="shortcut-item">
+                        <kbd>Ctrl + S</kbd>
+                        <span>Export data (download backup)</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Ctrl + D</kbd>
+                        <span>Toggle dark mode</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>?</kbd>
+                        <span>Show this help menu</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Esc</kbd>
+                        <span>Close any modal</span>
+                    </div>
+                </div>
+
+                <div class="shortcut-section">
+                    <div class="shortcut-category">Timer</div>
+                    <div class="shortcut-item">
+                        <kbd>Space</kbd>
+                        <span>Start/Pause timer</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>R</kbd>
+                        <span>Reset timer</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn primary" onclick="closeHelpModal()">Got it!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="js/timer.js"></script>
+    <script src="js/planner.js"></script>
+
+    <!-- Toast notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+</body>
+</html>
