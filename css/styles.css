@@ -185,7 +185,7 @@ body.dark-mode .modal-btn.secondary:hover {
 }
 
 body.dark-mode .progress-mini-bar {
-    background: var(--dark-border);
+    background: var(--white);
 }
 
 body.dark-mode .timer-display {
@@ -212,6 +212,9 @@ body.dark-mode .content-header {
 
 body.dark-mode .day-card-body {
     background: var(--dark-bg);
+}
+body.dark-mode .stat-mini-number {
+    color: var(--white);
 }
 
 * {
@@ -606,7 +609,8 @@ body.dark-mode .setting-label {
 
 .progress-mini-bar {
     height: 4px;
-    background: var(--gray-200);
+    background: var(--white);
+    border: 1px solid var(--gray-300);
     border-radius: 2px;
     overflow: hidden;
 }
@@ -633,6 +637,7 @@ body.dark-mode .setting-label {
     font-weight: 600;
     color: var(--black);
 }
+
 
 .stat-mini-label {
     font-size: 10px;
