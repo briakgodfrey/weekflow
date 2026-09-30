@@ -1051,6 +1051,13 @@ function toggleDarkMode() {
     
     // Save preference
     storageSet('darkMode', isDark ? 'enabled' : 'disabled');
+    updateThemeColor(isDark);
+}
+
+// Match the browser/app title bar to the current theme
+function updateThemeColor(isDark) {
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', isDark ? '#0f0f0f' : '#ffffff');
 }
 
 function loadDarkMode() {
@@ -1058,6 +1065,7 @@ function loadDarkMode() {
     if (darkMode === 'enabled') {
         document.body.classList.add('dark-mode');
         document.querySelector('.theme-icon').textContent = '🌙';
+        updateThemeColor(true);
     }
 }
 

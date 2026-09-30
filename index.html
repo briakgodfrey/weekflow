@@ -7,6 +7,17 @@
     <meta name="author" content="Briabytes">
     <title>Weekflow Planner</title>
     
+    <!-- App / PWA -->
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#ffffff">
+    <link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml">
+    <link rel="icon" href="assets/icons/favicon-32.png" type="image/png" sizes="32x32">
+    <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Weekflow">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    
     <!-- Fonts -->
     <link rel="stylesheet" href="css/fonts.css">
     
@@ -83,6 +94,9 @@
                         </button>
                     </div>
                     <input type="file" id="importInput" accept=".json" style="display: none;" onchange="importData(event)">
+                    <button class="data-btn install-btn" id="installBtn" onclick="installApp()" title="Install Weekflow as an app on this device" hidden>
+                        <span class="data-icon">+</span> Install App
+                    </button>
                 </div>
             </div>
         </aside>
@@ -268,6 +282,7 @@
     <script src="vendor/sortablejs/Sortable.min.js"></script>
     <script src="js/timer.js"></script>
     <script src="js/planner.js"></script>
+    <script src="js/pwa.js"></script>
 
     <!-- Toast notifications -->
     <div id="toastContainer" class="toast-container"></div>
