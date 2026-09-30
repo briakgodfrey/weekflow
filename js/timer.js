@@ -120,7 +120,11 @@ function saveTimerSettings() {
     timerSettings.pomosUntilLongBreak = pomos;
     
     // Save to localStorage
-    localStorage.setItem('pomodoroSettings', JSON.stringify(timerSettings));
+    try {
+        localStorage.setItem('pomodoroSettings', JSON.stringify(timerSettings));
+    } catch (error) {
+        console.error('Could not save timer settings:', error);
+    }
     
     // Reset timer with new settings if not running
     if (!isRunning && timerMode === 'focus') {
@@ -137,12 +141,24 @@ function saveTimerSettings() {
 }
 
 function loadTimerSettings() {
-    const saved = localStorage.getItem('pomodoroSettings');
-    if (saved) {
-        timerSettings = JSON.parse(saved);
-        timerSeconds = timerSettings.focusLength * 60;
-        document.getElementById('timerDisplay').textContent = formatTime(timerSeconds);
+    let saved = null;
+    try {
+        saved = JSON.parse(localStorage.getItem('pomodoroSettings'));
+    } catch (error) {
+        console.error('Could not load timer settings:', error);
     }
+    if (!saved || typeof saved !== 'object') return;
+
+    // Only accept positive whole numbers; keep defaults for anything else
+    const positiveInt = value => Number.isInteger(value) && value >= 1;
+    ['focusLength', 'shortBreak', 'longBreak', 'pomosUntilLongBreak'].forEach(key => {
+        if (positiveInt(saved[key])) timerSettings[key] = saved[key];
+    });
+    if (Number.isInteger(saved.completedPomos) && saved.completedPomos >= 0) {
+        timerSettings.completedPomos = saved.completedPomos;
+    }
+    timerSeconds = timerSettings.focusLength * 60;
+    document.getElementById('timerDisplay').textContent = formatTime(timerSeconds);
 }
 
 // Load saved settings on page load

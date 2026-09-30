@@ -1,5 +1,12 @@
 // Planner Data Structure
+// Bump SCHEMA_VERSION whenever the shape of plannerData changes, and add a
+// step to migratePlannerData() so existing users' data is upgraded on load.
+const SCHEMA_VERSION = 1;
+const STORAGE_KEY = 'plannerData';
+const MAX_IMPORT_BYTES = 5 * 1024 * 1024;
+
 let plannerData = {
+    schemaVersion: SCHEMA_VERSION,
     weeks: [
         {
             id: 'week1',
@@ -53,7 +60,7 @@ function showToast(message, type = 'success') {
     
     toast.innerHTML = `
         <span class="toast-icon">${icons[type] || icons.success}</span>
-        <span class="toast-message">${message}</span>
+        <span class="toast-message">${escapeHtml(message)}</span>
     `;
     
     container.appendChild(toast);
@@ -73,56 +80,135 @@ function generateId(prefix) {
     return `${prefix}${Date.now()}${Math.random().toString(36).substr(2, 5)}`;
 }
 
+// Escape user-provided text before interpolating it into HTML
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+// Storage access can throw (quota exceeded, private mode, blocked site data)
+function storageGet(key) {
+    try {
+        return localStorage.getItem(key);
+    } catch (error) {
+        console.error(`Could not read "${key}" from storage:`, error);
+        return null;
+    }
+}
+
+function storageSet(key, value) {
+    try {
+        localStorage.setItem(key, value);
+        return true;
+    } catch (error) {
+        console.error(`Could not write "${key}" to storage:`, error);
+        return false;
+    }
+}
+
+let saveFailing = false;
+
 function saveData() {
-    localStorage.setItem('plannerData', JSON.stringify(plannerData));
+    const ok = storageSet(STORAGE_KEY, JSON.stringify(plannerData));
+    if (!ok && !saveFailing) {
+        showToast('Could not save — browser storage is full or blocked. Export a backup (Ctrl+S).', 'error');
+    } else if (ok && saveFailing) {
+        showToast('Saving works again', 'success');
+    }
+    saveFailing = !ok;
+    return ok;
+}
+
+// Upgrade older data shapes to the current schema
+function migratePlannerData(raw) {
+    const version = Number.isInteger(raw.schemaVersion) ? raw.schemaVersion : 0;
+    if (version > SCHEMA_VERSION) {
+        throw new Error('This data was created by a newer version of Weekflow');
+    }
+    // v0 -> v1: schemaVersion introduced; no structural changes.
+    // Future migrations go here, e.g. if (version < 2) { ... }
+    return { ...raw, schemaVersion: SCHEMA_VERSION };
+}
+
+// Validate untrusted data (from storage or an imported file) and coerce it
+// into the expected shape. Throws if it isn't recognisable planner data.
+function normalizePlannerData(raw) {
+    if (!raw || typeof raw !== 'object' || !Array.isArray(raw.weeks)) {
+        throw new Error('Invalid planner data format');
+    }
+
+    const data = migratePlannerData(raw);
+    const seenIds = new Set();
+    const asObject = value => (value && typeof value === 'object' ? value : {});
+    const asArray = value => (Array.isArray(value) ? value : []);
+    const asText = value => (typeof value === 'string' || typeof value === 'number' ? String(value) : '');
+
+    // IDs are interpolated into inline handlers, so only allow safe characters
+    // and regenerate any that are missing, malformed, or duplicated.
+    const cleanId = (id, prefix) => {
+        const valid = typeof id === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(id);
+        const result = valid && !seenIds.has(id) ? id : generateId(prefix);
+        seenIds.add(result);
+        return result;
+    };
+
+    const weeks = data.weeks.map(asObject).map(week => ({
+        id: cleanId(week.id, 'week'),
+        name: asText(week.name) || 'Untitled Week',
+        days: asArray(week.days).map(asObject).map(day => ({
+            id: cleanId(day.id, 'day'),
+            name: asText(day.name),
+            workSchedule: asText(day.workSchedule) || 'Edit Schedule',
+            isOffDay: day.isOffDay === true,
+            notes: asText(day.notes),
+            sections: asArray(day.sections).map(asObject).map(section => ({
+                id: cleanId(section.id, 'section'),
+                name: asText(section.name),
+                tasks: asArray(section.tasks).map(asObject).map(task => ({
+                    id: cleanId(task.id, 'task'),
+                    text: asText(task.text),
+                    time: asText(task.time),
+                    estimate: asText(task.estimate),
+                    completed: task.completed === true
+                }))
+            }))
+        }))
+    }));
+
+    if (weeks.length === 0) {
+        throw new Error('Planner data contains no weeks');
+    }
+
+    const currentWeek = weeks.some(w => w.id === data.currentWeek) ? data.currentWeek : weeks[0].id;
+
+    return { schemaVersion: SCHEMA_VERSION, weeks, currentWeek };
 }
 
 function loadData() {
-    const saved = localStorage.getItem('plannerData');
-    if (saved) {
-        plannerData = JSON.parse(saved);
-        
-        // Repair duplicate IDs
-        const seenIds = new Set();
-        let needsRepair = false;
-        
-        plannerData.weeks.forEach(week => {
-            if (seenIds.has(week.id)) {
-                console.log('Found duplicate week ID:', week.id, '- repairing...');
-                week.id = generateId('week');
-                needsRepair = true;
-            }
-            seenIds.add(week.id);
-            
-            week.days.forEach(day => {
-                if (seenIds.has(day.id)) {
-                    day.id = generateId('day');
-                    needsRepair = true;
-                }
-                seenIds.add(day.id);
-                
-                day.sections.forEach(section => {
-                    if (seenIds.has(section.id)) {
-                        section.id = generateId('section');
-                        needsRepair = true;
-                    }
-                    seenIds.add(section.id);
-                    
-                    section.tasks.forEach(task => {
-                        if (seenIds.has(task.id)) {
-                            task.id = generateId('task');
-                            needsRepair = true;
-                        }
-                        seenIds.add(task.id);
-                    });
-                });
-            });
-        });
-        
-        if (needsRepair) {
-            console.log('Repaired duplicate IDs, saving...');
+    const saved = storageGet(STORAGE_KEY);
+    if (!saved) return;
+
+    try {
+        const normalized = normalizePlannerData(JSON.parse(saved));
+        plannerData = normalized;
+        if (JSON.stringify(normalized) !== saved) {
             saveData();
         }
+    } catch (error) {
+        // Keep the unreadable data so it can be recovered, then start fresh
+        console.error('Saved planner data is unreadable:', error);
+        const backupKey = `${STORAGE_KEY}.corrupt-${Date.now()}`;
+        const backedUp = storageSet(backupKey, saved);
+        showToast(
+            backedUp
+                ? `Saved data couldn't be read. A copy was kept as "${backupKey}".`
+                : 'Saved data couldn\'t be read and could not be backed up.',
+            'error'
+        );
     }
 }
 
@@ -395,7 +481,7 @@ function renderDays() {
         dayCard.innerHTML = `
             <div class="day-card-header">
                 <div class="day-name-group">
-                    <input type="text" class="day-name-input" value="${day.name}" 
+                    <input type="text" class="day-name-input" value="${escapeHtml(day.name)}" 
                         onchange="updateDayName('${day.id}', this.value)"
                         onclick="this.select()">
                 </div>
@@ -412,7 +498,7 @@ function renderDays() {
                     </div>
                     <textarea class="notes-textarea" 
                         placeholder="Reflections, thoughts, or anything else for today..."
-                        onchange="updateDayNotes('${day.id}', this.value)">${day.notes || ''}</textarea>
+                        onchange="updateDayNotes('${day.id}', this.value)">${escapeHtml(day.notes)}</textarea>
                 </div>
             </div>
         `;
@@ -489,7 +575,7 @@ function renderSections(day) {
         sectionDiv.innerHTML = `
             <div class="section-header">
                 <span class="section-drag-handle" title="Drag to reorder section">⋮⋮</span>
-                <input type="text" class="section-title-input" value="${section.name}" 
+                <input type="text" class="section-title-input" value="${escapeHtml(section.name)}" 
                     placeholder="Section name..."
                     onchange="updateSectionName('${day.id}', '${section.id}', this.value)"
                     onkeypress="if(event.key === 'Enter') { updateSectionName('${day.id}', '${section.id}', this.value); this.blur(); }"
@@ -652,10 +738,10 @@ function renderTasks(day, section) {
                 placeholder="Task description..."
                 onchange="updateTaskText('${day.id}', '${section.id}', '${task.id}', this.value)"
                 onkeypress="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); updateTaskText('${day.id}', '${section.id}', '${task.id}', this.value); this.blur(); }"
-                oninput="autoResize(this)">${task.text}</textarea>
+                oninput="autoResize(this)">${escapeHtml(task.text)}</textarea>
             ${task.estimate ? `
                 <div class="task-estimate">
-                    <input type="text" value="${task.estimate}" 
+                    <input type="text" value="${escapeHtml(task.estimate)}" 
                         onchange="updateTaskEstimate('${day.id}', '${section.id}', '${task.id}', this.value)"
                         onclick="this.select()" placeholder="Est">
                 </div>
@@ -664,7 +750,7 @@ function renderTasks(day, section) {
             `}
             ${task.time ? `
                 <div class="task-time">
-                    <input type="text" value="${task.time}" 
+                    <input type="text" value="${escapeHtml(task.time)}" 
                         onchange="updateTaskTime('${day.id}', '${section.id}', '${task.id}', this.value)"
                         onclick="this.select()">
                 </div>
@@ -855,16 +941,18 @@ function importData(event) {
     const file = event.target.files[0];
     if (!file) return;
     
+    if (file.size > MAX_IMPORT_BYTES) {
+        showToast('Import file is too large', 'error');
+        event.target.value = '';
+        return;
+    }
+    
     const reader = new FileReader();
     
     reader.onload = (e) => {
         try {
-            const importedData = JSON.parse(e.target.result);
-            
-            // Validate the data structure
-            if (!importedData.weeks || !Array.isArray(importedData.weeks)) {
-                throw new Error('Invalid planner data format');
-            }
+            // Validate and sanitize before anything touches the page
+            const importedData = normalizePlannerData(JSON.parse(e.target.result));
             
             // Confirm before overwriting
             showConfirmModal(
@@ -876,9 +964,7 @@ function importData(event) {
                     
                     // Re-render everything
                     const week = plannerData.weeks.find(w => w.id === plannerData.currentWeek);
-                    if (week) {
-                        document.getElementById('weekTitle').textContent = week.name;
-                    }
+                    document.getElementById('weekTitle').textContent = week.name;
                     renderWeekSelector();
                     renderDays();
                     updateProgress();
@@ -891,6 +977,11 @@ function importData(event) {
         }
         
         // Reset the file input
+        event.target.value = '';
+    };
+    
+    reader.onerror = () => {
+        showToast('Could not read the selected file', 'error');
         event.target.value = '';
     };
     
@@ -959,11 +1050,11 @@ function toggleDarkMode() {
     icon.textContent = isDark ? '🌙' : '☀️';
     
     // Save preference
-    localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
+    storageSet('darkMode', isDark ? 'enabled' : 'disabled');
 }
 
 function loadDarkMode() {
-    const darkMode = localStorage.getItem('darkMode');
+    const darkMode = storageGet('darkMode');
     if (darkMode === 'enabled') {
         document.body.classList.add('dark-mode');
         document.querySelector('.theme-icon').textContent = '🌙';

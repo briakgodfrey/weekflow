@@ -2,12 +2,12 @@
 
 > A minimalist, monochrome productivity planner built for focused work and intentional planning.
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![License](https://img.shields.io/badge/license-proprietary-lightgrey.svg)
 ![Version](https://img.shields.io/badge/version-1.0.0-green.svg)
 
 ## 🎯 Overview
 
-Weekflow is a sleek, browser-based weekly planner designed for anyone who values clean design and powerful functionality. Built with vanilla JavaScript and zero dependencies, it's fast and private.
+Weekflow is a sleek, browser-based weekly planner designed for anyone who values clean design and powerful functionality. Built with vanilla JavaScript and no build step, it's fast and private.
 
 For now: No accounts, no cloud sync, no subscriptions—just open the file and start planning. All your data stays in your browser, making it perfect for those who prioritize privacy and simplicity.
 
@@ -27,11 +27,12 @@ For now: No accounts, no cloud sync, no subscriptions—just open the file and s
 - **🎨 Clean UI** - Minimalist monochrome design that stays out of your way
 
 ### Technical Highlights
-- **Zero Dependencies** - Pure HTML, CSS, and JavaScript
-- **Offline First** - Works completely offline, no internet required
+- **No Build Step** - Pure HTML, CSS, and JavaScript; the only library (SortableJS) and the fonts are bundled locally
+- **Offline First** - Works completely offline, no internet required, no external requests
 - **Privacy Focused** - All data stays in your browser, nothing sent to servers
 - **Responsive Design** - Works on desktop and mobile devices
-- **Data Persistence** - Uses localStorage for reliable data storage
+- **Data Persistence** - Uses localStorage, with validation, schema versioning, and a warning if saving fails
+- **Backup & Restore** - Export and import your planner as JSON (imports are validated before use)
 
 ## 🚀 Quick Start
 
@@ -46,7 +47,7 @@ Visit the [live demo](https://briakgodfrey.github.io/weekflow) (GitHub Pages)
 ## 📖 How to Use
 
 ### Creating Your First Week
-1. The planner starts with a default week (Dec 27-31)
+1. The planner starts with a default week beginning today
 2. Click **"+ New Week"** to create additional weeks
 3. Switch between weeks using the sidebar navigation
 
@@ -74,7 +75,8 @@ Visit the [live demo](https://briakgodfrey.github.io/weekflow) (GitHub Pages)
 - HTML5
 - CSS3 (Custom properties, Flexbox, Grid)
 - Vanilla JavaScript (ES6+)
-- Google Fonts (Manrope, IBM Plex Mono)
+- SortableJS (bundled in `vendor/`, MIT)
+- Manrope and IBM Plex Mono (self-hosted in `assets/fonts/`, SIL OFL 1.1)
 
 **Browser Compatibility:**
 - Chrome/Edge 90+
@@ -84,7 +86,8 @@ Visit the [live demo](https://briakgodfrey.github.io/weekflow) (GitHub Pages)
 **Data Storage:**
 - localStorage (5-10MB limit depending on browser)
 - Data persists between sessions
-- Export/import coming in future versions
+- Export with **Ctrl+S**, import from a JSON backup
+- If saved data can't be read, a copy is kept under a `plannerData.corrupt-<timestamp>` key and the app starts fresh
 
 ## 🎨 Design Philosophy
 
@@ -116,8 +119,6 @@ This is a personal project, but suggestions and feedback are welcome! Feel free 
 
 ## 📄 License
 
-## License
-
 Proprietary License - Free to use as-is for personal or commercial purposes. Modifications and derivative works are not permitted. See LICENSE file for full terms.
 
 ## 👩‍💻 About
@@ -134,7 +135,8 @@ Perfect for students juggling coursework, developers managing side projects, or 
 
 ## 🙏 Acknowledgments
 
-- Fonts: [Manrope](https://fonts.google.com/specimen/Manrope) & [IBM Plex Mono](https://fonts.google.com/specimen/IBM+Plex+Mono)
+- Fonts: [Manrope](https://fonts.google.com/specimen/Manrope) & [IBM Plex Mono](https://fonts.google.com/specimen/IBM+Plex+Mono) (SIL Open Font License 1.1, see `assets/fonts/`)
+- Drag and drop: [SortableJS](https://github.com/SortableJS/Sortable) (MIT, see `vendor/sortablejs/LICENSE`)
 - Inspired by the need for a productivity tool that's beautiful, functional, and respects user privacy
 
 ---
