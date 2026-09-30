@@ -1,9 +1,10 @@
 // Weekflow service worker: caches the app shell so it works fully offline.
 //
-// RELEASING AN UPDATE: bump CACHE_VERSION whenever any app file changes.
+// RELEASING AN UPDATE: bump CACHE_VERSION whenever any app file changes, and
+// set the ?v= on the CSS/JS links in index.html to the same value.
 // Browsers only fetch new files when this file's contents change. Users then
 // see an "update available" prompt and get the new version on reload.
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const CACHE_NAME = `weekflow-${CACHE_VERSION}`;
 
 // Every file the app needs to run offline (paths relative to this file).

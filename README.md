@@ -124,7 +124,7 @@ The service worker serves the app from a cache, so browsers only pick up changes
 
 1. Make your changes.
 2. If you **added or renamed a file** the app loads, add it to the `APP_SHELL` list in `sw.js`. If any listed file is missing, the update won't install and users stay on the previous version.
-3. **Bump `CACHE_VERSION`** in `sw.js` (e.g. `'v1'` → `'v2'`).
+3. **Bump `CACHE_VERSION`** in `sw.js` (e.g. `'v2'` → `'v3'`), and change the `?v=` on the CSS/JS links in `index.html` to match (e.g. `?v=3`). The `?v=` makes sure browsers don't combine the new page with an old cached stylesheet or script.
 4. If you changed the shape of the saved data, bump `SCHEMA_VERSION` in `js/planner.js` and add a migration step in `migratePlannerData()`.
 5. Deploy. Returning users see the update prompt the next time they open the app.
 

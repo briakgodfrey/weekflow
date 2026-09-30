@@ -700,9 +700,9 @@ body.dark-mode .setting-label {
     font-weight: 700;
 }
 
+/* Spans both columns under Export / Import */
 .install-btn {
-    width: 100%;
-    margin-top: 8px;
+    grid-column: 1 / -1;
 }
 
 .install-btn[hidden] {
