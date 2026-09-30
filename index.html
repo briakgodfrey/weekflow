@@ -7,10 +7,19 @@
     <meta name="author" content="Briabytes">
     <title>Weekflow Planner</title>
     
+    <!-- App / PWA -->
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#ffffff">
+    <link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml">
+    <link rel="icon" href="assets/icons/favicon-32.png" type="image/png" sizes="32x32">
+    <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Weekflow">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    
     <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/fonts.css">
     
     <!-- Styles -->
     <link rel="stylesheet" href="css/styles.css">
@@ -85,6 +94,9 @@
                         </button>
                     </div>
                     <input type="file" id="importInput" accept=".json" style="display: none;" onchange="importData(event)">
+                    <button class="data-btn install-btn" id="installBtn" onclick="installApp()" title="Install Weekflow as an app on this device" hidden>
+                        <span class="data-icon">+</span> Install App
+                    </button>
                 </div>
             </div>
         </aside>
@@ -267,9 +279,10 @@
     </div>
 
     <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="vendor/sortablejs/Sortable.min.js"></script>
     <script src="js/timer.js"></script>
     <script src="js/planner.js"></script>
+    <script src="js/pwa.js"></script>
 
     <!-- Toast notifications -->
     <div id="toastContainer" class="toast-container"></div>

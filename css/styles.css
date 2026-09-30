@@ -700,6 +700,30 @@ body.dark-mode .setting-label {
     font-weight: 700;
 }
 
+.install-btn {
+    width: 100%;
+    margin-top: 8px;
+}
+
+.install-btn[hidden] {
+    display: none;
+}
+
+.update-toast .update-btn {
+    margin-left: 8px;
+    padding: 6px 12px;
+    border: 1px solid currentColor;
+    background: transparent;
+    border-radius: 6px;
+    color: inherit;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+}
+
 /* ===== MAIN CONTENT ===== */
 .main-content {
     margin-left: 280px;
