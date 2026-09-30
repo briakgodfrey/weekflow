@@ -19,10 +19,10 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     
     <!-- Fonts -->
-    <link rel="stylesheet" href="css/fonts.css">
+    <link rel="stylesheet" href="css/fonts.css?v=2">
     
     <!-- Styles -->
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/styles.css?v=2">
 </head>
 <body>
     <div class="app-container">
@@ -92,11 +92,11 @@
                         <button class="data-btn" onclick="document.getElementById('importInput').click()" title="Upload a backup file to restore your data">
                             <span class="data-icon">↑</span> Import
                         </button>
+                        <button class="data-btn install-btn" id="installBtn" onclick="installApp()" title="Install Weekflow as an app on this device" hidden>
+                            <span class="data-icon">+</span> Install App
+                        </button>
                     </div>
                     <input type="file" id="importInput" accept=".json" style="display: none;" onchange="importData(event)">
-                    <button class="data-btn install-btn" id="installBtn" onclick="installApp()" title="Install Weekflow as an app on this device" hidden>
-                        <span class="data-icon">+</span> Install App
-                    </button>
                 </div>
             </div>
         </aside>
@@ -279,10 +279,10 @@
     </div>
 
     <!-- Scripts -->
-    <script src="vendor/sortablejs/Sortable.min.js"></script>
-    <script src="js/timer.js"></script>
-    <script src="js/planner.js"></script>
-    <script src="js/pwa.js"></script>
+    <script src="vendor/sortablejs/Sortable.min.js?v=2"></script>
+    <script src="js/timer.js?v=2"></script>
+    <script src="js/planner.js?v=2"></script>
+    <script src="js/pwa.js?v=2"></script>
 
     <!-- Toast notifications -->
     <div id="toastContainer" class="toast-container"></div>
